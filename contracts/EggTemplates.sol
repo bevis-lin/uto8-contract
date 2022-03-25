@@ -13,9 +13,6 @@ contract EggTemplates {
     //templateId => Template
     mapping(uint256 => Template) public eggTemplates;
 
-    //templateId => PiamonBox[]
-    mapping(uint256 => PiamonBox[]) public templatePiamonBoxes;
-
     constructor() {
         // Set the transaction sender as the owner of the contract.
         owner = msg.sender;
@@ -35,47 +32,6 @@ contract EggTemplates {
         newTemplate.description = _description;
         eggTemplates[newId] = newTemplate;
         totalTemplates++;
-    }
-
-    function addPiamonBox(
-        Element _element,
-        Race _race,
-        uint256 _templateId,
-        uint16 _computingPower,
-        string memory _headPart,
-        string memory _earPart,
-        string memory _eyePart
-    ) public onlyOwner {
-        PiamonBox memory newPiamonBox;
-        PiamonData memory newData;
-        newData.element = _element;
-        newData.race = _race;
-        newData.computingPower = _computingPower;
-        newData.headPart = _headPart;
-        newData.earPart = _earPart;
-        newData.eyePart = _eyePart;
-        newPiamonBox.data = newData;
-        newPiamonBox.templateId = _templateId;
-
-        templatePiamonBoxes[_templateId].push(newPiamonBox);
-    }
-
-    function getAvailableBox(uint256 templateId)
-        public
-        onlyOwner
-        returns (PiamonBox memory box)
-    {
-        PiamonBox[] storage piamonBoxes = templatePiamonBoxes[templateId];
-        uint256 boxesLength = piamonBoxes.length;
-        require(boxesLength > 0, "No box available");
-
-        //get rand number from chainlink
-        uint256 rndIndex = 122;
-
-        PiamonBox memory returnBox = piamonBoxes[rndIndex];
-        piamonBoxes[rndIndex] = piamonBoxes[boxesLength - 1];
-        delete piamonBoxes[boxesLength - 1];
-        return returnBox;
     }
 
     modifier onlyOwner() {
@@ -100,14 +56,6 @@ contract EggTemplates {
         returns (Template memory)
     {
         return eggTemplates[templateId];
-    }
-
-    function getPiamonBoxesByTemplateId(uint256 templateId)
-        public
-        view
-        returns (PiamonBox[] memory)
-    {
-        return templatePiamonBoxes[templateId];
     }
 
     // function getTemplates() public view returns (uint256[] memory) {
