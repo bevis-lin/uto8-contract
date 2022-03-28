@@ -1,13 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-struct Template {
-    uint256 id;
-    string name;
-    string imageUrl;
-    string description;
-}
-
 enum Element {
     Fire,
     Earth,

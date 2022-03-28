@@ -10,8 +10,24 @@ contract EggTemplates {
     Counters.Counter private _counter;
     uint256 public totalTemplates;
 
+    struct EggTemplate {
+        uint256 id;
+        string name;
+        string c_name;
+        string imageUrl;
+        string description;
+        string c_description;
+        int256 currency;
+        int256 price;
+        string saleOpenTime;
+        string saleCloseTime;
+        string unboxTime;
+        int256 limitedElement;
+        int256 limitedRace;
+    }
+
     //templateId => Template
-    mapping(uint256 => Template) public eggTemplates;
+    mapping(uint256 => EggTemplate) public eggTemplates;
 
     constructor() {
         // Set the transaction sender as the owner of the contract.
@@ -20,16 +36,34 @@ contract EggTemplates {
 
     function create(
         string memory _name,
+        string memory _c_name,
         string memory _imageUrl,
-        string memory _description
+        string memory _description,
+        string memory _c_description,
+        int256 _currency,
+        int256 _price,
+        string memory _saleOpenTime,
+        string memory _saleCloseTime,
+        string memory _unboxTime,
+        int256 _limitedElement,
+        int256 _limitedRace
     ) public {
         _counter.increment();
         uint256 newId = _counter.current();
-        Template memory newTemplate;
+        EggTemplate memory newTemplate;
         newTemplate.id = newId;
         newTemplate.name = _name;
+        newTemplate.c_name = _c_name;
         newTemplate.imageUrl = _imageUrl;
         newTemplate.description = _description;
+        newTemplate.c_description = _c_description;
+        newTemplate.currency = _currency;
+        newTemplate.price = _price;
+        newTemplate.saleOpenTime = _saleOpenTime;
+        newTemplate.saleCloseTime = _saleCloseTime;
+        newTemplate.unboxTime = _unboxTime;
+        newTemplate.limitedElement = _limitedElement;
+        newTemplate.limitedRace = _limitedRace;
         eggTemplates[newId] = newTemplate;
         totalTemplates++;
     }
@@ -43,7 +77,9 @@ contract EggTemplates {
     }
 
     function getAllTemplates() public view returns (Template[] memory) {
-        Template[] memory returnTemplates = new Template[](totalTemplates);
+        EggTemplate[] memory returnTemplates = new EggTemplate[](
+            totalTemplates
+        );
         for (uint256 i = 0; i < totalTemplates; i++) {
             returnTemplates[i] = eggTemplates[i];
         }

@@ -9,8 +9,15 @@ contract PiamonTemplates {
     Counters.Counter private _counter;
     uint256 public totalTempaltes;
 
+    struct PiamonTemplate {
+        uint256 id;
+        string name;
+        string imageUrl;
+        string description;
+    }
+
     //templateId => Template
-    mapping(uint256 => Template) public piamonTemplates;
+    mapping(uint256 => PiamonTemplate) public piamonTemplates;
 
     //templateId => PiamonData
     mapping(uint256 => PiamonData) public piamonDatas;
@@ -22,7 +29,7 @@ contract PiamonTemplates {
     ) public {
         _counter.increment();
         uint256 newId = _counter.current();
-        Template memory newTemplate;
+        PiamonTemplate memory newTemplate;
         newTemplate.id = newId;
         newTemplate.name = _name;
         newTemplate.imageUrl = _imageUrl;
@@ -31,8 +38,10 @@ contract PiamonTemplates {
         totalTempaltes++;
     }
 
-    function getAllTemplates() public view returns (Template[] memory) {
-        Template[] memory returnTemplates = new Template[](totalTempaltes);
+    function getAllTemplates() public view returns (PiamonTemplate[] memory) {
+        PiamonTemplate[] memory returnTemplates = new PiamonTemplate[](
+            totalTempaltes
+        );
         for (uint256 i = 0; i < totalTempaltes; i++) {
             returnTemplates[i] = piamonTemplates[i];
         }
@@ -42,7 +51,7 @@ contract PiamonTemplates {
     function getTemplateById(uint256 templateId)
         public
         view
-        returns (Template memory)
+        returns (PiamonTemplate memory)
     {
         return piamonTemplates[templateId];
     }
