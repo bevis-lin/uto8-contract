@@ -15,6 +15,7 @@ contract EggTemplates {
         string name;
         string c_name;
         string imageUrl;
+        string filmUrl;
         string description;
         string c_description;
         int256 currency;
@@ -38,6 +39,7 @@ contract EggTemplates {
         string memory _name,
         string memory _c_name,
         string memory _imageUrl,
+        string memory _filmUrl,
         string memory _description,
         string memory _c_description,
         int256 _currency,
@@ -55,6 +57,7 @@ contract EggTemplates {
         newTemplate.name = _name;
         newTemplate.c_name = _c_name;
         newTemplate.imageUrl = _imageUrl;
+        newTemplate.filmUrl = _filmUrl;
         newTemplate.description = _description;
         newTemplate.c_description = _c_description;
         newTemplate.currency = _currency;
