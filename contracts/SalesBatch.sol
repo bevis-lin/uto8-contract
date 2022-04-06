@@ -13,6 +13,11 @@ contract SalesBatch {
     uint256 public totalMintedPiamon;
     BlindBox[] public blindBoxes;
 
+    constructor() {
+        // Set the transaction sender as the owner of the contract.
+        owner = msg.sender;
+    }
+
     mapping(uint256 => PiamonBox[]) public blindBoxPiamonBoxes; //keep piamon box for a blindbox
 
     function addBlindBox(BlindBox memory _blindBox) public onlyOwner {

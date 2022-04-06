@@ -13,7 +13,7 @@ contract Piamon is ERC721URIStorage, SalesBatch {
     Counters.Counter private currentTokenId;
     using Strings for uint256;
 
-    constructor() ERC721("PIAMON", "UTO8") {}
+    constructor() ERC721("PIAMON", "UTO8") SalesBatch() {}
 
     function mintTo(address recipient, uint256 blindBoxId)
         public
