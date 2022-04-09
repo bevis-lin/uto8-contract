@@ -31,7 +31,7 @@ struct PiamonBox {
     string mouthPart;
     string backPart;
     bool isCustom;
-    int256 allocatedId; //NFT Id
+    uint256 allocatedId; //NFT Id
 }
 
 struct BlindBox {
@@ -43,9 +43,14 @@ struct BlindBox {
     // string c_description;
     // int256 currency;
     uint256 price;
-    string saleOpenTime;
-    string saleCloseTime;
-    string unboxTime;
+    uint256 saleOpenTime;
+    uint256 saleCloseTime;
+    uint256 unboxTime;
     // int256 limitedElement;
     // int256 limitedRace;
+}
+
+struct WhiteList {
+    address minterAddress;
+    uint256 availableQuantity;
 }

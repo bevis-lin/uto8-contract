@@ -20,8 +20,30 @@ contract Piamon is ERC721URIStorage, SalesBatch {
         payable
         returns (uint256)
     {
+        bool isWhiteListMinter = false;
+
+        if (block.timestamp < blindBoxes[blindBoxId].saleOpenTime) {
+            require(
+                checkIsWhiteListed(blindBoxId, recipient),
+                "Public sale is not open yet"
+            );
+
+            uint256 availableQty = getWhiteListAvailableQuantity(
+                blindBoxId,
+                recipient
+            );
+
+            require(
+                availableQty > 0,
+                "Reach whitelist mint quantity limitation"
+            );
+
+            isWhiteListMinter = true;
+        }
+
         uint256 price = blindBoxes[blindBoxId].price;
         require(price <= msg.value, "Ether value sent is not correct");
+
         currentTokenId.increment();
         uint256 newItemId = currentTokenId.current();
         _safeMint(recipient, newItemId);
@@ -30,6 +52,10 @@ contract Piamon is ERC721URIStorage, SalesBatch {
             newItemId
         );
         _setTokenURI(newItemId, tokenURI);
+
+        if (isWhiteListMinter) {
+            decreaseWhiteListAvailableQuantity(blindBoxId, recipient);
+        }
 
         return newItemId;
     }

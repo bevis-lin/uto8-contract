@@ -15,17 +15,9 @@ async function main() {
 
   //console.log('Token address:', token.address);
 
-  // const PiamonNFT = await ethers.getContractFactory('Piamon');
-  // const deployedPiamon = await PiamonNFT.deploy();
-  // console.log('Pimon deployed:', deployedPiamon.address);
-
-  // const EggNFT = await ethers.getContractFactory('Egg');
-  // const deployedEgg = await EggNFT.deploy();
-  // console.log('Egg deployed:', deployedEgg.address);
-
-  const eggTemplate = await ethers.getContractFactory('EggTemplates');
-  const deployedEggTemplate = await eggTemplate.deploy();
-  console.log('EggTemplate deployed:', deployedEggTemplate.address);
+  const PiamonNFT = await ethers.getContractFactory('Piamon');
+  const deployedPiamon = await PiamonNFT.deploy();
+  console.log('Pimon deployed:', deployedPiamon.address);
 }
 
 main()
