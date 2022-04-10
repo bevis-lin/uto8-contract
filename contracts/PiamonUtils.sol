@@ -43,8 +43,8 @@ struct BlindBox {
     // string c_description;
     // int256 currency;
     uint256 price;
-    uint256 saleOpenTime;
-    uint256 saleCloseTime;
+    bool isSaleOpen;
+    uint256 totalQuantity;
     uint256 unboxTime;
     // int256 limitedElement;
     // int256 limitedRace;

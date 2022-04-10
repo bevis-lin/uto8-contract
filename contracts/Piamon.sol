@@ -12,6 +12,7 @@ contract Piamon is ERC721URIStorage, SalesBatch {
     using Counters for Counters.Counter;
     Counters.Counter private currentTokenId;
     using Strings for uint256;
+    mapping(uint256 => uint256) public blindBoxTotalMint;
 
     constructor() ERC721("PIAMON", "UTO8") SalesBatch() {}
 
@@ -22,7 +23,7 @@ contract Piamon is ERC721URIStorage, SalesBatch {
     {
         bool isWhiteListMinter = false;
 
-        if (block.timestamp < blindBoxes[blindBoxId].saleOpenTime) {
+        if (!blindBoxes[blindBoxId].isSaleOpen) {
             require(
                 checkIsWhiteListed(blindBoxId, recipient),
                 "Public sale is not open yet"
@@ -41,6 +42,12 @@ contract Piamon is ERC721URIStorage, SalesBatch {
             isWhiteListMinter = true;
         }
 
+        require(
+            blindBoxTotalMint[blindBoxId] <
+                blindBoxes[blindBoxId].totalQuantity,
+            "No blindbox available"
+        );
+
         uint256 price = blindBoxes[blindBoxId].price;
         require(price <= msg.value, "Ether value sent is not correct");
 
@@ -56,6 +63,8 @@ contract Piamon is ERC721URIStorage, SalesBatch {
         if (isWhiteListMinter) {
             decreaseWhiteListAvailableQuantity(blindBoxId, recipient);
         }
+
+        blindBoxTotalMint[blindBoxId] = blindBoxTotalMint[blindBoxId] + 1;
 
         return newItemId;
     }
