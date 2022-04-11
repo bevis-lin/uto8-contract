@@ -13,12 +13,26 @@ contract Piamon is ERC721URIStorage, SalesBatch {
     Counters.Counter private currentTokenId;
     using Strings for uint256;
     mapping(uint256 => uint256) public blindBoxTotalMint;
+    mapping(uint256 => uint256) public templateTotalMint;
 
     constructor() ERC721("PIAMON", "UTO8") SalesBatch() {}
 
-    function mintTo(address recipient, uint256 blindBoxId)
-        public
-        payable
+    function mintTo(
+        address recipient,
+        ProductType productType,
+        uint256 productId
+    ) public payable returns (uint256) {
+        if (productType == ProductType.Piamon) {
+            return mintWithTemplate(recipient, productId);
+        } else if (productType == ProductType.BlindBox) {
+            return mintWithBlindBox(recipient, productId);
+        } else {
+            revert("Wrong product type");
+        }
+    }
+
+    function mintWithBlindBox(address recipient, uint256 blindBoxId)
+        internal
         returns (uint256)
     {
         bool isWhiteListMinter = false;
@@ -29,14 +43,16 @@ contract Piamon is ERC721URIStorage, SalesBatch {
                 "Public sale is not open yet"
             );
 
-            uint256 availableQty = getWhiteListAvailableQuantity(
-                blindBoxId,
-                recipient
+            WhiteList memory whiteList = getWhiteList(blindBoxId, recipient);
+
+            require(
+                whiteList.availableQuantity > 0,
+                "Reach whitelist mint quantity limitation"
             );
 
             require(
-                availableQty > 0,
-                "Reach whitelist mint quantity limitation"
+                whiteList.price <= msg.value,
+                "Ether value sent is not correct"
             );
 
             isWhiteListMinter = true;
@@ -48,8 +64,10 @@ contract Piamon is ERC721URIStorage, SalesBatch {
             "No blindbox available"
         );
 
-        uint256 price = blindBoxes[blindBoxId].price;
-        require(price <= msg.value, "Ether value sent is not correct");
+        if (!isWhiteListMinter) {
+            uint256 price = blindBoxes[blindBoxId].price;
+            require(price <= msg.value, "Ether value sent is not correct");
+        }
 
         currentTokenId.increment();
         uint256 newItemId = currentTokenId.current();
@@ -65,6 +83,27 @@ contract Piamon is ERC721URIStorage, SalesBatch {
         }
 
         blindBoxTotalMint[blindBoxId] = blindBoxTotalMint[blindBoxId] + 1;
+
+        return newItemId;
+    }
+
+    function mintWithTemplate(address recipient, uint256 templateId)
+        internal
+        returns (uint256)
+    {
+        PiamonTemplate storage template = piamonTemplates[templateId];
+        require(
+            template.totalQuantity > templateTotalMint[templateId],
+            "Template sold out"
+        );
+        currentTokenId.increment();
+        uint256 price = piamonTemplates[templateId].price;
+        require(price <= msg.value, "Ether value sent is not correct");
+        uint256 newItemId = currentTokenId.current();
+        _safeMint(recipient, newItemId);
+        _setTokenURI(newItemId, piamonTemplates[templateId].metadataURI);
+
+        templateTotalMint[templateId] = templateTotalMint[templateId] + 1;
 
         return newItemId;
     }

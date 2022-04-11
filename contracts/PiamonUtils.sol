@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.1;
 
+enum ProductType {
+    Piamon,
+    BlindBox
+}
+
 enum Element {
     Fire,
     Earth,
@@ -34,6 +39,13 @@ struct PiamonBox {
     uint256 allocatedId; //NFT Id
 }
 
+struct PiamonTemplate {
+    uint256 templateId;
+    string metadataURI;
+    uint256 price;
+    uint256 totalQuantity;
+}
+
 struct BlindBox {
     //string code;
     string name;
@@ -52,5 +64,6 @@ struct BlindBox {
 
 struct WhiteList {
     address minterAddress;
+    uint256 price;
     uint256 availableQuantity;
 }

@@ -12,6 +12,7 @@ contract SalesBatch {
     address public owner;
     uint256 public totalMintedPiamon;
     BlindBox[] public blindBoxes;
+    PiamonTemplate[] public piamonTemplates;
 
     constructor() {
         // Set the transaction sender as the owner of the contract.
@@ -35,6 +36,13 @@ contract SalesBatch {
         blindBoxPiamonBoxes[_blindBoxId].push(_box);
     }
 
+    function addPiamonTemplateStruct(PiamonTemplate memory _template)
+        public
+        onlyOwner
+    {
+        piamonTemplates.push(_template);
+    }
+
     function checkIsWhiteListed(uint256 _blindBoxId, address _address)
         public
         view
@@ -54,27 +62,26 @@ contract SalesBatch {
         return isInWhiteList;
     }
 
-    function getWhiteListAvailableQuantity(
-        uint256 _blindBoxId,
-        address _address
-    ) public view returns (uint256 quantity) {
-        uint256 availableQty = 0;
+    function getWhiteList(uint256 _blindBoxId, address _address)
+        public
+        view
+        returns (WhiteList memory whiteListReturn)
+    {
         WhiteList[] storage lists = blindBoxWhiteList[_blindBoxId];
         for (uint256 i = 0; i < lists.length; i++) {
             WhiteList storage whiteList = lists[i];
             if (whiteList.minterAddress == _address) {
-                availableQty = whiteList.availableQuantity;
+                whiteListReturn = whiteList;
                 break;
             }
         }
-        return availableQty;
     }
 
     function decreaseWhiteListAvailableQuantity(
         uint256 _blindBoxId,
         address _address
     ) public returns (uint256 remainQuantity) {
-        uint256 remainQty = 0;
+        //uint256 remainQty = 0;
         WhiteList[] storage lists = blindBoxWhiteList[_blindBoxId];
         for (uint256 i = 0; i < lists.length; i++) {
             WhiteList storage whiteList = lists[i];
@@ -82,11 +89,10 @@ contract SalesBatch {
                 if (whiteList.availableQuantity > 0) {
                     whiteList.availableQuantity--;
                 }
-                remainQty = whiteList.availableQuantity;
+                remainQuantity = whiteList.availableQuantity;
                 break;
             }
         }
-        return remainQty;
     }
 
     modifier onlyOwner() {
