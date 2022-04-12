@@ -10,7 +10,7 @@ contract SalesBatch {
     //Counters.Counter private _blindBoxCounter;
 
     address public owner;
-    uint256 public totalMintedPiamon;
+    //uint256 public totalMintedPiamon;
     BlindBox[] public blindBoxes;
     PiamonTemplate[] public piamonTemplates;
 
@@ -27,6 +27,13 @@ contract SalesBatch {
 
     function addBlindBox(BlindBox memory _blindBox) public onlyOwner {
         blindBoxes.push(_blindBox);
+    }
+
+    function addWhiteListStruct(uint256 _blindBox, WhiteList memory _whiteList)
+        public
+        onlyOwner
+    {
+        blindBoxWhiteList[_blindBox].push(_whiteList);
     }
 
     function addPiamonBoxStruct(uint256 _blindBoxId, PiamonBox memory _box)

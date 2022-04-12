@@ -35,9 +35,11 @@ contract Piamon is ERC721URIStorage, SalesBatch {
         internal
         returns (uint256)
     {
+        require(blindBoxes[blindBoxId].isSaleOpen, "Sale is closed");
+
         bool isWhiteListMinter = false;
 
-        if (!blindBoxes[blindBoxId].isSaleOpen) {
+        if (blindBoxes[blindBoxId].saleTimeStart > block.timestamp) {
             require(
                 checkIsWhiteListed(blindBoxId, recipient),
                 "Public sale is not open yet"
@@ -57,6 +59,8 @@ contract Piamon is ERC721URIStorage, SalesBatch {
 
             isWhiteListMinter = true;
         }
+
+        require(blindBoxes[blindBoxId].saleTimeEnd > block.timestamp, "Sale is closed");
 
         require(
             blindBoxTotalMint[blindBoxId] <
