@@ -2,21 +2,22 @@
 pragma solidity ^0.8.1;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./PiamonUtils.sol";
 
-contract SalesBatch {
+contract SalesBatch is Ownable {
     //Variables
     //using Counters for Counters.Counter;
     //Counters.Counter private _blindBoxCounter;
 
-    address public owner;
+    //address public owner;
     //uint256 public totalMintedPiamon;
     BlindBox[] public blindBoxes;
     PiamonTemplate[] public piamonTemplates;
 
     constructor() {
         // Set the transaction sender as the owner of the contract.
-        owner = msg.sender;
+        //owner = msg.sender;
     }
 
     //keep piamon box for a blindbox
@@ -102,11 +103,11 @@ contract SalesBatch {
         }
     }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Not owner");
-        // Underscore is a special character only used inside
-        // a function modifier and it tells Solidity to
-        // execute the rest of the code.
-        _;
-    }
+    // modifier onlyOwner() {
+    //     require(msg.sender == owner, "Not owner");
+    //     // Underscore is a special character only used inside
+    //     // a function modifier and it tells Solidity to
+    //     // execute the rest of the code.
+    //     _;
+    // }
 }
