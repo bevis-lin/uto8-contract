@@ -5,23 +5,29 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "base64-sol/base64.sol";
+import "./UTO8.sol";
 import "./SalesBatch.sol";
 
 contract Piamon is ERC721URIStorage, SalesBatch {
     using Counters for Counters.Counter;
     Counters.Counter private currentTokenId;
     using Strings for uint256;
+
+    UTO8 uto8;
     mapping(uint256 => uint256) public blindBoxTotalMint;
     mapping(uint256 => uint256) public templateTotalMint;
 
-    constructor() ERC721("PIAMON", "UTO8") SalesBatch() {}
+    constructor(address tokenAddress) ERC721("PIAMON", "UTO8") SalesBatch() {
+        uto8 = UTO8(tokenAddress);
+    }
 
     function mintTo(
         address recipient,
         ProductType productType,
         uint256 productId
-    ) public payable returns (uint256) {
+    ) public returns (uint256) {
         if (productType == ProductType.Piamon) {
             return mintWithTemplate(recipient, productId);
         } else if (productType == ProductType.BlindBox) {
@@ -36,8 +42,18 @@ contract Piamon is ERC721URIStorage, SalesBatch {
         returns (uint256)
     {
         require(blindBoxes[blindBoxId].isSaleOpen, "Sale is closed");
+        require(
+            blindBoxes[blindBoxId].saleTimeEnd > block.timestamp,
+            "Sale is closed"
+        );
+        require(
+            blindBoxTotalMint[blindBoxId] <
+                blindBoxes[blindBoxId].totalQuantity,
+            "No blindbox available"
+        );
 
         bool isWhiteListMinter = false;
+        uint256 mintPrice;
 
         if (blindBoxes[blindBoxId].saleTimeStart > block.timestamp) {
             require(
@@ -52,26 +68,25 @@ contract Piamon is ERC721URIStorage, SalesBatch {
                 "Reach whitelist mint quantity limitation"
             );
 
-            require(
-                whiteList.price <= msg.value,
-                "Ether value sent is not correct"
-            );
+            // require(
+            //     whiteList.price <= msg.value,
+            //     "Ether value sent is not correct"
+            // );
+
+            mintPrice = whiteList.price;
 
             isWhiteListMinter = true;
         }
 
-        require(blindBoxes[blindBoxId].saleTimeEnd > block.timestamp, "Sale is closed");
-
-        require(
-            blindBoxTotalMint[blindBoxId] <
-                blindBoxes[blindBoxId].totalQuantity,
-            "No blindbox available"
-        );
-
         if (!isWhiteListMinter) {
-            uint256 price = blindBoxes[blindBoxId].price;
-            require(price <= msg.value, "Ether value sent is not correct");
+            mintPrice = blindBoxes[blindBoxId].price;
         }
+
+        bool tokenSent = uto8.transferFrom(msg.sender, owner(), mintPrice);
+        require(
+            tokenSent,
+            "Failed to transfer tokens from user to piamon contract"
+        );
 
         currentTokenId.increment();
         uint256 newItemId = currentTokenId.current();
@@ -143,4 +158,5 @@ contract Piamon is ERC721URIStorage, SalesBatch {
             )
         );
     }
+
 }
