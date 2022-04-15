@@ -85,7 +85,7 @@ contract Piamon is ERC721URIStorage, SalesBatch {
         bool tokenSent = uto8.transferFrom(msg.sender, owner(), mintPrice);
         require(
             tokenSent,
-            "Failed to transfer tokens from user to piamon contract"
+            "Failed to transfer tokens from user to contract owner"
         );
 
         currentTokenId.increment();
@@ -158,5 +158,4 @@ contract Piamon is ERC721URIStorage, SalesBatch {
             )
         );
     }
-
 }
