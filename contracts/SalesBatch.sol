@@ -20,28 +20,34 @@ contract SalesBatch is Ownable {
         //owner = msg.sender;
     }
 
-    //keep piamon box for a blindbox
-    mapping(uint256 => PiamonBox[]) public blindBoxPiamonBoxes;
+    //keep Randmon Box Ids and for a blindbox, Random Box is kept on IPFS
+    //blindBoxId => RandomBoxId[]
+    mapping(uint256 => uint256[]) internal blindBoxPiamonBoxIds;
 
     //keep white list for a blindbox
-    mapping(uint256 => WhiteList[]) public blindBoxWhiteList; //
+    mapping(uint256 => WhiteList[]) public blindBoxWhiteList;
 
     function addBlindBox(BlindBox memory _blindBox) public onlyOwner {
         blindBoxes.push(_blindBox);
     }
 
-    function addWhiteListStruct(uint256 _blindBox, WhiteList memory _whiteList)
+    function addPiamonBoxId(uint256 _blindBoxId, uint256 _piamonBoxId)
         public
         onlyOwner
     {
-        blindBoxWhiteList[_blindBox].push(_whiteList);
+        require(
+            blindBoxPiamonBoxIds[_blindBoxId].length <
+                blindBoxes[_blindBoxId].totalQuantity,
+            "No more space to add PiamonBoxId"
+        );
+        blindBoxPiamonBoxIds[_blindBoxId].push(_piamonBoxId);
     }
 
-    function addPiamonBoxStruct(uint256 _blindBoxId, PiamonBox memory _box)
-        public
-        onlyOwner
-    {
-        blindBoxPiamonBoxes[_blindBoxId].push(_box);
+    function addWhiteListStruct(
+        uint256 _blindBoxId,
+        WhiteList memory _whiteList
+    ) public onlyOwner {
+        blindBoxWhiteList[_blindBoxId].push(_whiteList);
     }
 
     function addPiamonTemplateStruct(PiamonTemplate memory _template)
@@ -102,12 +108,4 @@ contract SalesBatch is Ownable {
             }
         }
     }
-
-    // modifier onlyOwner() {
-    //     require(msg.sender == owner, "Not owner");
-    //     // Underscore is a special character only used inside
-    //     // a function modifier and it tells Solidity to
-    //     // execute the rest of the code.
-    //     _;
-    // }
 }

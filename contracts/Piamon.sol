@@ -158,4 +158,20 @@ contract Piamon is ERC721URIStorage, SalesBatch {
             )
         );
     }
+
+    function UnboxBlindBox(uint256 _blindBoxId, uint256 _nftId)
+        public
+        onlyOwner
+    {
+        //get piamon box id
+        uint256 piamonBoxId = blindBoxPiamonBoxIds[_blindBoxId][_nftId];
+        string memory metadataURI = string(
+            abi.encodePacked(
+                blindBoxes[_blindBoxId].baseMetadataUrl,
+                Strings.toString(piamonBoxId),
+                ".json"
+            )
+        );
+        _setTokenURI(_nftId, metadataURI);
+    }
 }

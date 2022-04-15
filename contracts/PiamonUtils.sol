@@ -24,21 +24,6 @@ enum Race {
     Voidy
 }
 
-struct PiamonBox {
-    uint256 serialNo;
-    Element element;
-    Race race;
-    uint16 spiritualPower;
-    string headPart;
-    string earPart;
-    string eyePart;
-    string tailPart;
-    string mouthPart;
-    string backPart;
-    bool isCustom;
-    uint256 allocatedId; //NFT Id
-}
-
 struct PiamonTemplate {
     uint256 templateId;
     string metadataURI;
@@ -47,21 +32,17 @@ struct PiamonTemplate {
 }
 
 struct BlindBox {
-    //string code;
     string name;
     string imageUrl;
-    //string filmUrl;
+    string randomBoxUrl;
     string description;
-    // string c_description;
-    // int256 currency;
+    string baseMetadataUrl;
     uint256 price;
     uint256 saleTimeStart;
     uint256 saleTimeEnd;
     bool isSaleOpen;
     uint256 totalQuantity;
     uint256 unboxTime;
-    // int256 limitedElement;
-    // int256 limitedRace;
 }
 
 struct WhiteList {
