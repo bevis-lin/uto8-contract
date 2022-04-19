@@ -20,27 +20,11 @@ contract SalesBatch is Ownable {
         //owner = msg.sender;
     }
 
-    //keep Randmon Box Ids and for a blindbox, Random Box is kept on IPFS
-    //blindBoxId => RandomBoxId[]
-    mapping(uint256 => uint256[]) internal blindBoxPiamonBoxIds;
-
     //keep white list for a blindbox
     mapping(uint256 => WhiteList[]) public blindBoxWhiteList;
 
     function addBlindBox(BlindBox memory _blindBox) public onlyOwner {
         blindBoxes.push(_blindBox);
-    }
-
-    function addPiamonBoxId(uint256 _blindBoxId, uint256 _piamonBoxId)
-        public
-        onlyOwner
-    {
-        require(
-            blindBoxPiamonBoxIds[_blindBoxId].length <
-                blindBoxes[_blindBoxId].totalQuantity,
-            "No more space to add PiamonBoxId"
-        );
-        blindBoxPiamonBoxIds[_blindBoxId].push(_piamonBoxId);
     }
 
     function addWhiteListStruct(
