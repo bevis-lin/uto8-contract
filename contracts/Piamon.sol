@@ -8,19 +8,30 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "base64-sol/base64.sol";
 import "./UTO8.sol";
-import "./SalesBatch.sol";
+//import "./PiamonUtils.sol";
+import "./SalesProvider.sol";
 
-contract Piamon is ERC721URIStorage, SalesBatch {
+contract Piamon is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
     Counters.Counter private currentTokenId;
     using Strings for uint256;
 
     UTO8 uto8;
+    SalesProvider salesProvider;
     mapping(uint256 => uint256) public blindBoxTotalMint;
     mapping(uint256 => uint256) public templateTotalMint;
 
-    constructor(address tokenAddress) ERC721("PIAMON", "UTO8") SalesBatch() {
+    enum ProductType {
+        Piamon,
+        BlindBox
+    }
+
+    constructor(address tokenAddress) ERC721("PIAMON", "UTO8") {
         uto8 = UTO8(tokenAddress);
+    }
+
+    function setSalesProvider(address contractAddress) public onlyOwner {
+        salesProvider = SalesProvider(contractAddress);
     }
 
     function mintTo(
@@ -41,30 +52,28 @@ contract Piamon is ERC721URIStorage, SalesBatch {
         internal
         returns (uint256)
     {
-        require(blindBoxes[blindBoxId].isSaleOpen, "Sale is closed");
-        require(
-            blindBoxes[blindBoxId].saleTimeEnd > block.timestamp,
-            "Sale is closed"
-        );
+        require(salesProvider.checkIsSaleOpen(blindBoxId), "Sale is closed");
+        require(salesProvider.checkIsSaleEnd(blindBoxId), "Sale has ended");
         require(
             blindBoxTotalMint[blindBoxId] <
-                blindBoxes[blindBoxId].totalQuantity,
+                salesProvider.getSaleTotalQuantity(blindBoxId),
             "No blindbox available"
         );
 
         bool isWhiteListMinter = false;
         uint256 mintPrice;
 
-        if (blindBoxes[blindBoxId].saleTimeStart > block.timestamp) {
+        if (!salesProvider.checkIsSaleStart(blindBoxId)) {
             require(
-                checkIsWhiteListed(blindBoxId, recipient),
+                salesProvider.checkIsWhiteListed(blindBoxId, recipient),
                 "Public sale is not open yet"
             );
 
-            WhiteList memory whiteList = getWhiteList(blindBoxId, recipient);
+            (uint256 availableQty, uint256 whiteListPrice) = salesProvider
+                .getWhiteList(blindBoxId, recipient);
 
             require(
-                whiteList.availableQuantity > 0,
+                availableQty > 0,
                 "Reach whitelist mint quantity limitation"
             );
 
@@ -73,13 +82,13 @@ contract Piamon is ERC721URIStorage, SalesBatch {
             //     "Ether value sent is not correct"
             // );
 
-            mintPrice = whiteList.price;
+            mintPrice = whiteListPrice;
 
             isWhiteListMinter = true;
         }
 
         if (!isWhiteListMinter) {
-            mintPrice = blindBoxes[blindBoxId].price;
+            mintPrice = salesProvider.getSalePrice(blindBoxId);
         }
 
         bool tokenSent = uto8.transferFrom(msg.sender, owner(), mintPrice);
@@ -98,7 +107,10 @@ contract Piamon is ERC721URIStorage, SalesBatch {
         _setTokenURI(newItemId, tokenURI);
 
         if (isWhiteListMinter) {
-            decreaseWhiteListAvailableQuantity(blindBoxId, recipient);
+            salesProvider.decreaseWhiteListAvailableQuantity(
+                blindBoxId,
+                recipient
+            );
         }
 
         blindBoxTotalMint[blindBoxId] = blindBoxTotalMint[blindBoxId] + 1;
@@ -110,17 +122,22 @@ contract Piamon is ERC721URIStorage, SalesBatch {
         internal
         returns (uint256)
     {
-        PiamonTemplate storage template = piamonTemplates[templateId];
+        (
+            string memory metadataURI,
+            uint256 price,
+            uint256 totalQuantity
+        ) = salesProvider.getTemplate(templateId);
+
         require(
-            template.totalQuantity > templateTotalMint[templateId],
+            totalQuantity > templateTotalMint[templateId],
             "Template sold out"
         );
         currentTokenId.increment();
-        uint256 price = piamonTemplates[templateId].price;
+        //uint256 price = salesProvider.piamonTemplates[templateId].price;
         require(price <= msg.value, "Ether value sent is not correct");
         uint256 newItemId = currentTokenId.current();
         _safeMint(recipient, newItemId);
-        _setTokenURI(newItemId, piamonTemplates[templateId].metadataURI);
+        _setTokenURI(newItemId, metadataURI);
 
         templateTotalMint[templateId] = templateTotalMint[templateId] + 1;
 
@@ -132,19 +149,21 @@ contract Piamon is ERC721URIStorage, SalesBatch {
         view
         returns (string memory)
     {
-        // get random number from map
-        //uint256 randomNumber = randomMap[tokenId];
-        // build tokenURI from randomNumber
-        //string memory randomTokenURI = string(abi.encodePacked(_baseTokenURI, randomNumber.toString(), ".png"));
-        BlindBox storage blindBox = blindBoxes[blindBoxId];
+        //BlindBox storage blindBox = salesProvider.blindBoxes[blindBoxId];
 
-        string memory imageUrl = blindBox.imageUrl;
+        (
+            string memory blindBoxName,
+            string memory imageUrl,
+            string memory description,
+            string memory piamonMetadataUrl
+        ) = salesProvider.getMetadataForBlindBox(blindBoxId);
+
+        //string memory imageUrl = blindBox.imageUrl;
 
         // metadata
         string memory name = string(
-            abi.encodePacked(blindBox.name, " #", tokenId.toString())
+            abi.encodePacked(blindBoxName, " #", tokenId.toString())
         );
-        string memory description = blindBox.description;
 
         // prettier-ignore
         return string(
@@ -160,6 +179,13 @@ contract Piamon is ERC721URIStorage, SalesBatch {
     }
 
     function UnboxBlindBox(uint256 _blindBoxId) public onlyOwner {
+        (
+            string memory blindBoxName,
+            string memory imageUrl,
+            string memory description,
+            string memory piamonMetadataUrl
+        ) = salesProvider.getMetadataForBlindBox(_blindBoxId);
+
         uint256 randomNumber = 69;
         //loop all minted NFT Ids in this BlindBox
         for (uint256 i = 1; i < blindBoxTotalMint[_blindBoxId]; i++) {
@@ -169,7 +195,7 @@ contract Piamon is ERC721URIStorage, SalesBatch {
             }
             string memory metadataURI = string(
                 abi.encodePacked(
-                    blindBoxes[_blindBoxId].baseMetadataUrl,
+                    piamonMetadataUrl,
                     Strings.toString(piamonBoxId),
                     ".json"
                 )
