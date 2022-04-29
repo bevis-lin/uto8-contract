@@ -20,6 +20,7 @@ contract SalesProvider is Ownable {
         bool isSaleOpen;
         uint256 totalQuantity;
         uint256 unboxTime;
+        uint256 vrfNumber;
     }
 
     struct WhiteList {
@@ -43,6 +44,9 @@ contract SalesProvider is Ownable {
     //keep white list for a blindbox
     mapping(uint256 => WhiteList[]) public blindBoxWhiteList;
 
+    //keep NFT Id and BlindBox Id mapping , NFT_ID => BlindBox_ID
+    mapping(uint256 => uint256) public nftBlindBoxIdMap;
+
     function addBlindBox(BlindBox memory _blindBox) public onlyOwner {
         blindBoxes.push(_blindBox);
     }
@@ -59,6 +63,13 @@ contract SalesProvider is Ownable {
         onlyOwner
     {
         piamonTemplates.push(_template);
+    }
+
+    function addNFTAndBlindBoxMapping(uint256 _nftID, uint256 _blindBoxId)
+        public
+        onlyOwner
+    {
+        nftBlindBoxIdMap[_nftID] = _blindBoxId;
     }
 
     function checkIsSaleOpen(uint256 _blindBoxId) public view returns (bool) {

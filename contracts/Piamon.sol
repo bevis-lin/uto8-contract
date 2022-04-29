@@ -203,4 +203,62 @@ contract Piamon is ERC721URIStorage, Ownable {
             _setTokenURI(i, metadataURI);
         }
     }
+
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        virtual
+        override
+        returns (string memory)
+    {
+        require(
+            _exists(tokenId),
+            "ERC721URIStorage: URI query for nonexistent token"
+        );
+
+        uint256 blindBoxId = salesProvider.nftBlindBoxIdMap[tokenId];
+
+        (
+            string name,
+            string imageUrl,
+            string randomBoxUrl,
+            string description,
+            string piamonMetadataUrl,
+            uint256 price,
+            uint256 saleTimeStart,
+            uint256 saleTimeEnd,
+            bool isSaleOpen,
+            uint256 totalQuantity,
+            uint256 unboxTime,
+            uint256 vrfNumber
+        ) = salesProvider.blindBoxes[blindBoxId];
+
+        //string memory _tokenURI = _tokenURIs[tokenId];
+        //string memory base = _baseURI();
+
+        // If there is no base URI, return the token URI.
+        //if (bytes(base).length == 0) {
+        //    return _tokenURI;
+        //}
+        // If both are set, concatenate the baseURI and tokenURI (via abi.encodePacked).
+        //if (bytes(_tokenURI).length > 0) {
+        //    return string(abi.encodePacked(base, _tokenURI));
+        //}
+
+        string memory _baseURI = piamonMetadataUrl;
+        uint256 unboxNFTID = tokenId + vrfNumber;
+
+        if (bytes(piamonMetadataUrl).length > 0) {
+            return
+                string(
+                    abi.encodePacked(
+                        piamonMetadataUrl,
+                        Strings.toString(unboxNFTID),
+                        ".json"
+                    )
+                );
+        }
+
+        return super.tokenURI(tokenId);
+    }
 }
