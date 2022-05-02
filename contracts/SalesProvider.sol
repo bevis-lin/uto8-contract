@@ -44,9 +44,6 @@ contract SalesProvider is Ownable {
     //keep white list for a blindbox
     mapping(uint256 => WhiteList[]) public blindBoxWhiteList;
 
-    //keep NFT Id and BlindBox Id mapping , NFT_ID => BlindBox_ID
-    mapping(uint256 => uint256) public nftBlindBoxIdMap;
-
     function addBlindBox(BlindBox memory _blindBox) public onlyOwner {
         blindBoxes.push(_blindBox);
     }
@@ -63,13 +60,6 @@ contract SalesProvider is Ownable {
         onlyOwner
     {
         piamonTemplates.push(_template);
-    }
-
-    function addNFTAndBlindBoxMapping(uint256 _nftID, uint256 _blindBoxId)
-        public
-        onlyOwner
-    {
-        nftBlindBoxIdMap[_nftID] = _blindBoxId;
     }
 
     function checkIsSaleOpen(uint256 _blindBoxId) public view returns (bool) {
@@ -96,14 +86,15 @@ contract SalesProvider is Ownable {
         return blindBoxes[_blindBoxId].price;
     }
 
-    function getMetadataForBlindBox(uint256 _blindBoxId)
+    function getBlindBoxInfo(uint256 _blindBoxId)
         public
         view
         returns (
             string memory name,
             string memory imageUrl,
             string memory description,
-            string memory piamonMetadataUrl
+            string memory piamonMetadataUrl,
+            uint256 vrfNumber
         )
     {
         BlindBox storage blindBox = blindBoxes[_blindBoxId];
@@ -111,6 +102,7 @@ contract SalesProvider is Ownable {
         imageUrl = blindBox.imageUrl;
         description = blindBox.description;
         piamonMetadataUrl = blindBox.piamonMetadataUrl;
+        vrfNumber = blindBox.vrfNumber;
     }
 
     function getTemplate(uint256 _templateId)

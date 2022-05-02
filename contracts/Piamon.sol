@@ -18,8 +18,11 @@ contract Piamon is ERC721URIStorage, Ownable {
 
     UTO8 uto8;
     SalesProvider salesProvider;
+    //BlindBoxId => Total Mint Count
     mapping(uint256 => uint256) public blindBoxTotalMint;
     mapping(uint256 => uint256) public templateTotalMint;
+    //keep NFT Id and BlindBox Id mapping , NFT_ID => BlindBox_ID => Serial_ID
+    mapping(uint256 => uint256[]) public nftBlindBoxIdMap;
 
     enum ProductType {
         Piamon,
@@ -114,6 +117,11 @@ contract Piamon is ERC721URIStorage, Ownable {
         }
 
         blindBoxTotalMint[blindBoxId] = blindBoxTotalMint[blindBoxId] + 1;
+        //salesProvider.addNFTAndBlindBoxMapping(newItemId, blindBoxId);
+        nftBlindBoxIdMap[newItemId] = [
+            blindBoxId,
+            blindBoxTotalMint[blindBoxId]
+        ];
 
         return newItemId;
     }
@@ -155,8 +163,9 @@ contract Piamon is ERC721URIStorage, Ownable {
             string memory blindBoxName,
             string memory imageUrl,
             string memory description,
-            string memory piamonMetadataUrl
-        ) = salesProvider.getMetadataForBlindBox(blindBoxId);
+            string memory piamonMetadataUrl,
+            uint256 vrfNumber
+        ) = salesProvider.getBlindBoxInfo(blindBoxId);
 
         //string memory imageUrl = blindBox.imageUrl;
 
@@ -178,32 +187,6 @@ contract Piamon is ERC721URIStorage, Ownable {
         );
     }
 
-    function UnboxBlindBox(uint256 _blindBoxId) public onlyOwner {
-        (
-            string memory blindBoxName,
-            string memory imageUrl,
-            string memory description,
-            string memory piamonMetadataUrl
-        ) = salesProvider.getMetadataForBlindBox(_blindBoxId);
-
-        uint256 randomNumber = 69;
-        //loop all minted NFT Ids in this BlindBox
-        for (uint256 i = 1; i < blindBoxTotalMint[_blindBoxId]; i++) {
-            uint256 piamonBoxId = i + randomNumber;
-            if (piamonBoxId > 8000) {
-                piamonBoxId -= 8000;
-            }
-            string memory metadataURI = string(
-                abi.encodePacked(
-                    piamonMetadataUrl,
-                    Strings.toString(piamonBoxId),
-                    ".json"
-                )
-            );
-            _setTokenURI(i, metadataURI);
-        }
-    }
-
     function tokenURI(uint256 tokenId)
         public
         view
@@ -216,22 +199,15 @@ contract Piamon is ERC721URIStorage, Ownable {
             "ERC721URIStorage: URI query for nonexistent token"
         );
 
-        uint256 blindBoxId = salesProvider.nftBlindBoxIdMap[tokenId];
+        uint256 blindBoxId = nftBlindBoxIdMap[tokenId][0];
 
         (
-            string name,
-            string imageUrl,
-            string randomBoxUrl,
-            string description,
-            string piamonMetadataUrl,
-            uint256 price,
-            uint256 saleTimeStart,
-            uint256 saleTimeEnd,
-            bool isSaleOpen,
-            uint256 totalQuantity,
-            uint256 unboxTime,
+            string memory blindBoxName,
+            string memory imageUrl,
+            string memory description,
+            string memory piamonMetadataUrl,
             uint256 vrfNumber
-        ) = salesProvider.blindBoxes[blindBoxId];
+        ) = salesProvider.getBlindBoxInfo(blindBoxId);
 
         //string memory _tokenURI = _tokenURIs[tokenId];
         //string memory base = _baseURI();
@@ -245,8 +221,8 @@ contract Piamon is ERC721URIStorage, Ownable {
         //    return string(abi.encodePacked(base, _tokenURI));
         //}
 
-        string memory _baseURI = piamonMetadataUrl;
-        uint256 unboxNFTID = tokenId + vrfNumber;
+        //string memory _baseURI = piamonMetadataUrl;
+        uint256 unboxNFTID = nftBlindBoxIdMap[tokenId][1] + vrfNumber;
 
         if (bytes(piamonMetadataUrl).length > 0) {
             return
