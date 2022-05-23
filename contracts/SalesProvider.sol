@@ -3,10 +3,19 @@ pragma solidity ^0.8.1;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
+import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract SalesProvider is Ownable {
+contract SalesProvider is VRFConsumerBase, Ownable {
+    using SafeMath for uint256;
+    bytes32 internal keyHash;
+    uint256 internal fee;
+    uint256 public randomResult;
+
     BlindBox[] public blindBoxes;
     PiamonTemplate[] public piamonTemplates;
+    //requestId => blindBoxId
+    mapping(bytes32 => uint256) vrfRequestsForBlindBox;
 
     struct BlindBox {
         string name;
@@ -36,9 +45,42 @@ contract SalesProvider is Ownable {
         uint256 totalQuantity;
     }
 
-    constructor() {
-        // Set the transaction sender as the owner of the contract.
-        //owner = msg.sender;
+    constructor()
+        VRFConsumerBase(
+            0x8C7382F9D8f56b33781fE506E897a4F1e2d17255, //VRF coordinator
+            0x326C977E6efc84E512bB9C30f76E30c160eD06FB //LINK token address
+        )
+    {
+        keyHash = 0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4;
+        fee = 0.0001 * 10**18; // 0.1 LINK
+    }
+
+    function getRandomNumberForBlindBox(uint256 blindBoxId)
+        public
+        onlyOwner
+        returns (bytes32 requestId)
+    {
+        require(
+            LINK.balanceOf(address(this)) > fee,
+            "Not enough LINK in contract"
+        );
+        requestId = requestRandomness(keyHash, fee);
+        vrfRequestsForBlindBox[requestId] = blindBoxId;
+        //return requestRandomness(keyHash, fee);
+    }
+
+    function fulfillRandomness(bytes32 requestId, uint256 randomness)
+        internal
+        override
+    {
+        //get blindbox by referring the requestId
+        uint256 totalQty = blindBoxes[vrfRequestsForBlindBox[requestId]]
+            .totalQuantity;
+        //uint256 totalQty = 8000;
+        randomResult = randomness.mod(totalQty).add(1);
+        //update vrfNumber in blindbox
+        blindBoxes[vrfRequestsForBlindBox[requestId]].vrfNumber = randomResult;
+        //blindBoxes[0].vrfNumber = randomResult;
     }
 
     //keep white list for a blindbox
@@ -94,6 +136,7 @@ contract SalesProvider is Ownable {
             string memory imageUrl,
             string memory description,
             string memory piamonMetadataUrl,
+            uint256 totalQuantity,
             uint256 vrfNumber
         )
     {
@@ -102,6 +145,7 @@ contract SalesProvider is Ownable {
         imageUrl = blindBox.imageUrl;
         description = blindBox.description;
         piamonMetadataUrl = blindBox.piamonMetadataUrl;
+        totalQuantity = blindBox.totalQuantity;
         vrfNumber = blindBox.vrfNumber;
     }
 

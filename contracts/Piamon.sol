@@ -164,6 +164,7 @@ contract Piamon is ERC721URIStorage, Ownable {
             string memory imageUrl,
             string memory description,
             string memory piamonMetadataUrl,
+            uint256 totalQuantity,
             uint256 vrfNumber
         ) = salesProvider.getBlindBoxInfo(blindBoxId);
 
@@ -199,42 +200,41 @@ contract Piamon is ERC721URIStorage, Ownable {
             "ERC721URIStorage: URI query for nonexistent token"
         );
 
-        uint256 blindBoxId = nftBlindBoxIdMap[tokenId][0];
+        //check if NFT was created base on blindbox or template
+        if (nftBlindBoxIdMap[tokenId].length > 0) {
+            uint256 blindBoxId = nftBlindBoxIdMap[tokenId][0];
 
-        (
-            string memory blindBoxName,
-            string memory imageUrl,
-            string memory description,
-            string memory piamonMetadataUrl,
-            uint256 vrfNumber
-        ) = salesProvider.getBlindBoxInfo(blindBoxId);
+            (
+                string memory blindBoxName,
+                string memory imageUrl,
+                string memory description,
+                string memory piamonMetadataUrl,
+                uint256 totalQuantity,
+                uint256 vrfNumber
+            ) = salesProvider.getBlindBoxInfo(blindBoxId);
 
-        //string memory _tokenURI = _tokenURIs[tokenId];
-        //string memory base = _baseURI();
+            uint256 tempUnboxedNFTID = nftBlindBoxIdMap[tokenId][1] + vrfNumber;
+            uint256 unboxedNFTID = 0;
+            if (tempUnboxedNFTID > totalQuantity) {
+                unboxedNFTID = tempUnboxedNFTID - totalQuantity;
+            } else {
+                unboxedNFTID = tempUnboxedNFTID;
+            }
 
-        // If there is no base URI, return the token URI.
-        //if (bytes(base).length == 0) {
-        //    return _tokenURI;
-        //}
-        // If both are set, concatenate the baseURI and tokenURI (via abi.encodePacked).
-        //if (bytes(_tokenURI).length > 0) {
-        //    return string(abi.encodePacked(base, _tokenURI));
-        //}
-
-        //string memory _baseURI = piamonMetadataUrl;
-        uint256 unboxNFTID = nftBlindBoxIdMap[tokenId][1] + vrfNumber;
-
-        if (bytes(piamonMetadataUrl).length > 0) {
-            return
-                string(
-                    abi.encodePacked(
-                        piamonMetadataUrl,
-                        Strings.toString(unboxNFTID),
-                        ".json"
-                    )
-                );
+            if (bytes(piamonMetadataUrl).length > 0) {
+                return
+                    string(
+                        abi.encodePacked(
+                            piamonMetadataUrl,
+                            Strings.toString(unboxedNFTID),
+                            ".json"
+                        )
+                    );
+            }else{
+                return super.tokenURI(tokenId);
+            }
+        } else {
+            return super.tokenURI(tokenId);
         }
-
-        return super.tokenURI(tokenId);
     }
 }
