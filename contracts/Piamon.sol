@@ -213,24 +213,30 @@ contract Piamon is ERC721URIStorage, Ownable {
                 uint256 vrfNumber
             ) = salesProvider.getBlindBoxInfo(blindBoxId);
 
-            uint256 tempUnboxedNFTID = nftBlindBoxIdMap[tokenId][1] + vrfNumber;
-            uint256 unboxedNFTID = 0;
-            if (tempUnboxedNFTID > totalQuantity) {
-                unboxedNFTID = tempUnboxedNFTID - totalQuantity;
-            } else {
-                unboxedNFTID = tempUnboxedNFTID;
-            }
+            //if vrfNumber == 0 means the blindbox has not been unboxed
+            if (vrfNumber > 0) {
+                uint256 tempUnboxedNFTID = nftBlindBoxIdMap[tokenId][1] +
+                    vrfNumber;
+                uint256 unboxedNFTID = 0;
+                if (tempUnboxedNFTID > totalQuantity) {
+                    unboxedNFTID = tempUnboxedNFTID - totalQuantity;
+                } else {
+                    unboxedNFTID = tempUnboxedNFTID;
+                }
 
-            if (bytes(piamonMetadataUrl).length > 0) {
-                return
-                    string(
-                        abi.encodePacked(
-                            piamonMetadataUrl,
-                            Strings.toString(unboxedNFTID),
-                            ".json"
-                        )
-                    );
-            }else{
+                if (bytes(piamonMetadataUrl).length > 0) {
+                    return
+                        string(
+                            abi.encodePacked(
+                                piamonMetadataUrl,
+                                Strings.toString(unboxedNFTID),
+                                ".json"
+                            )
+                        );
+                } else {
+                    return super.tokenURI(tokenId);
+                }
+            } else {
                 return super.tokenURI(tokenId);
             }
         } else {
