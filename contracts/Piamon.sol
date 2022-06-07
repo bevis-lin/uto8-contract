@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "base64-sol/base64.sol";
 import "./UTO8.sol";
-//import "./PiamonUtils.sol";
 import "./SalesProvider.sol";
 
 contract Piamon is ERC721URIStorage, Ownable {
@@ -100,8 +99,24 @@ contract Piamon is ERC721URIStorage, Ownable {
             "Failed to transfer tokens from user to contract owner"
         );
 
-        currentTokenId.increment();
-        uint256 newItemId = currentTokenId.current();
+        //newItenId = blindBoxStartId + (get blindbox total minted count)
+        //currentTokenId.increment();
+        //uint256 newItemId = currentTokenId.current();
+        // (
+        //     string memory blindBoxName,
+        //     string memory imageUrl,
+        //     uint256 tokenIdStart,
+        //     string memory description,
+        //     string memory piamonMetadataUrl,
+        //     uint256 totalQuantity,
+        //     uint256 vrfNumber
+        // ) = salesProvider.getBlindBoxInfo(blindBoxId);
+
+        uint256 tokenIdStart = salesProvider.getBlindBoxTokenIdStart(
+            blindBoxId
+        );
+
+        uint256 newItemId = tokenIdStart + blindBoxTotalMint[blindBoxId];
         _safeMint(recipient, newItemId);
         string memory tokenURI = constructInitialTokenURI(
             blindBoxId,
@@ -132,6 +147,7 @@ contract Piamon is ERC721URIStorage, Ownable {
     {
         (
             string memory metadataURI,
+            uint256 tokenIdStart,
             uint256 price,
             uint256 totalQuantity
         ) = salesProvider.getTemplate(templateId);
@@ -140,10 +156,11 @@ contract Piamon is ERC721URIStorage, Ownable {
             totalQuantity > templateTotalMint[templateId],
             "Template sold out"
         );
-        currentTokenId.increment();
+        //currentTokenId.increment();
         //uint256 price = salesProvider.piamonTemplates[templateId].price;
         require(price <= msg.value, "Ether value sent is not correct");
-        uint256 newItemId = currentTokenId.current();
+        //uint256 newItemId = currentTokenId.current();
+        uint256 newItemId = tokenIdStart + templateTotalMint[templateId];
         _safeMint(recipient, newItemId);
         _setTokenURI(newItemId, metadataURI);
 
@@ -215,13 +232,18 @@ contract Piamon is ERC721URIStorage, Ownable {
 
             //if vrfNumber == 0 means the blindbox has not been unboxed
             if (vrfNumber > 0) {
+                uint256 tokenIdStart = salesProvider.getBlindBoxTokenIdStart(
+                    blindBoxId
+                );
                 uint256 tempUnboxedNFTID = nftBlindBoxIdMap[tokenId][1] +
                     vrfNumber;
                 uint256 unboxedNFTID = 0;
                 if (tempUnboxedNFTID > totalQuantity) {
-                    unboxedNFTID = tempUnboxedNFTID - totalQuantity;
+                    unboxedNFTID =
+                        tokenIdStart +
+                        (tempUnboxedNFTID - totalQuantity - 1);
                 } else {
-                    unboxedNFTID = tempUnboxedNFTID;
+                    unboxedNFTID = tokenIdStart + (tempUnboxedNFTID - 1);
                 }
 
                 if (bytes(piamonMetadataUrl).length > 0) {

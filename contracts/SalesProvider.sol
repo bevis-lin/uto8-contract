@@ -20,7 +20,7 @@ contract SalesProvider is VRFConsumerBase, Ownable {
     struct BlindBox {
         string name;
         string imageUrl;
-        string randomBoxUrl;
+        uint256 tokenIdStart;
         string description;
         string piamonMetadataUrl;
         uint256 price;
@@ -40,6 +40,7 @@ contract SalesProvider is VRFConsumerBase, Ownable {
 
     struct PiamonTemplate {
         uint256 templateId;
+        uint256 tokenIdStart;
         string metadataURI;
         uint256 price;
         uint256 totalQuantity;
@@ -128,6 +129,15 @@ contract SalesProvider is VRFConsumerBase, Ownable {
         return blindBoxes[_blindBoxId].price;
     }
 
+    function getBlindBoxTokenIdStart(uint256 _blindBoxId)
+        public
+        view
+        returns (uint256 tokenIdStart)
+    {
+        BlindBox storage blindBox = blindBoxes[_blindBoxId];
+        tokenIdStart = blindBox.tokenIdStart;
+    }
+
     function getBlindBoxInfo(uint256 _blindBoxId)
         public
         view
@@ -154,6 +164,7 @@ contract SalesProvider is VRFConsumerBase, Ownable {
         view
         returns (
             string memory metadataURI,
+            uint256 tokenIdStart,
             uint256 price,
             uint256 totalQuantity
         )
@@ -162,6 +173,7 @@ contract SalesProvider is VRFConsumerBase, Ownable {
         metadataURI = template.metadataURI;
         price = template.price;
         totalQuantity = template.totalQuantity;
+        tokenIdStart = template.tokenIdStart;
     }
 
     function checkIsWhiteListed(uint256 _blindBoxId, address _address)
