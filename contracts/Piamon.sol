@@ -61,6 +61,13 @@ contract Piamon is ERC721URIStorage, Ownable {
                 salesProvider.getSaleTotalQuantity(blindBoxId),
             "No blindbox available"
         );
+        require(
+            salesProvider.checkIfUserUnderBlindBoxMintLimit(
+                blindBoxId,
+                recipient
+            ),
+            "Reach mint limitation"
+        );
 
         bool isWhiteListMinter = false;
         uint256 mintPrice;
@@ -118,11 +125,11 @@ contract Piamon is ERC721URIStorage, Ownable {
 
         uint256 newItemId = tokenIdStart + blindBoxTotalMint[blindBoxId];
         _safeMint(recipient, newItemId);
-        string memory tokenURI = constructInitialTokenURI(
+        string memory tokenURIVar = constructInitialTokenURI(
             blindBoxId,
             newItemId
         );
-        _setTokenURI(newItemId, tokenURI);
+        _setTokenURI(newItemId, tokenURIVar);
 
         if (isWhiteListMinter) {
             salesProvider.decreaseWhiteListAvailableQuantity(
@@ -132,6 +139,10 @@ contract Piamon is ERC721URIStorage, Ownable {
         }
 
         blindBoxTotalMint[blindBoxId] = blindBoxTotalMint[blindBoxId] + 1;
+        salesProvider.increaseUserBlindboxTotalMintedCount(
+            blindBoxId,
+            recipient
+        );
         //salesProvider.addNFTAndBlindBoxMapping(newItemId, blindBoxId);
         nftBlindBoxIdMap[newItemId] = [
             blindBoxId,
@@ -180,9 +191,9 @@ contract Piamon is ERC721URIStorage, Ownable {
             string memory blindBoxName,
             string memory imageUrl,
             string memory description,
-            string memory piamonMetadataUrl,
-            uint256 totalQuantity,
-            uint256 vrfNumber
+            ,
+            ,
+
         ) = salesProvider.getBlindBoxInfo(blindBoxId);
 
         //string memory imageUrl = blindBox.imageUrl;
@@ -221,10 +232,19 @@ contract Piamon is ERC721URIStorage, Ownable {
         if (nftBlindBoxIdMap[tokenId].length > 0) {
             uint256 blindBoxId = nftBlindBoxIdMap[tokenId][0];
 
+            // (
+            //     string memory blindBoxName,
+            //     string memory imageUrl,
+            //     string memory description,
+            //     string memory piamonMetadataUrl,
+            //     uint256 totalQuantity,
+            //     uint256 vrfNumber
+            // ) = salesProvider.getBlindBoxInfo(blindBoxId);
+
             (
-                string memory blindBoxName,
-                string memory imageUrl,
-                string memory description,
+                ,
+                ,
+                ,
                 string memory piamonMetadataUrl,
                 uint256 totalQuantity,
                 uint256 vrfNumber

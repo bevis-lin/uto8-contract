@@ -6,16 +6,26 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
+//import "hardhat/console.sol";
+
 contract SalesProvider is VRFConsumerBase, Ownable {
     using SafeMath for uint256;
     bytes32 internal keyHash;
     uint256 internal fee;
     uint256 public randomResult;
+    address public operator;
 
     BlindBox[] public blindBoxes;
     PiamonTemplate[] public piamonTemplates;
+    //keep white list for a blindbox
+    mapping(uint256 => WhiteList[]) public blindBoxWhiteList;
     //requestId => blindBoxId
     mapping(bytes32 => uint256) vrfRequestsForBlindBox;
+    //user address => (blindboxId => minted quantity)
+    mapping(address => mapping(uint256 => uint256))
+        public blindboxUserMintQuantity;
+    //blindbox Id => blindBoxSetting
+    mapping(uint256 => BlindBoxSetting) public blindBoxSettings;
 
     struct BlindBox {
         string name;
@@ -32,6 +42,11 @@ contract SalesProvider is VRFConsumerBase, Ownable {
         uint256 vrfNumber;
     }
 
+    struct BlindBoxSetting {
+        uint256 blindBoxId;
+        uint256 purchaseLimit;
+    }
+
     struct WhiteList {
         address minterAddress;
         uint256 price;
@@ -46,7 +61,7 @@ contract SalesProvider is VRFConsumerBase, Ownable {
         uint256 totalQuantity;
     }
 
-    constructor()
+    constructor(address _operatorAddress)
         VRFConsumerBase(
             0x8C7382F9D8f56b33781fE506E897a4F1e2d17255, //VRF coordinator
             0x326C977E6efc84E512bB9C30f76E30c160eD06FB //LINK token address
@@ -54,6 +69,8 @@ contract SalesProvider is VRFConsumerBase, Ownable {
     {
         keyHash = 0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4;
         fee = 0.0001 * 10**18; // 0.1 LINK
+
+        operator = _operatorAddress;
     }
 
     function getRandomNumberForBlindBox(uint256 blindBoxId)
@@ -84,11 +101,15 @@ contract SalesProvider is VRFConsumerBase, Ownable {
         //blindBoxes[0].vrfNumber = randomResult;
     }
 
-    //keep white list for a blindbox
-    mapping(uint256 => WhiteList[]) public blindBoxWhiteList;
-
     function addBlindBox(BlindBox memory _blindBox) public onlyOwner {
         blindBoxes.push(_blindBox);
+    }
+
+    function addBlindBoxSetting(
+        uint256 _blindBoxId,
+        BlindBoxSetting memory _blindBoxSetting
+    ) public onlyOwner {
+        blindBoxSettings[_blindBoxId] = _blindBoxSetting;
     }
 
     function addWhiteListStruct(
@@ -215,7 +236,9 @@ contract SalesProvider is VRFConsumerBase, Ownable {
         uint256 _blindBoxId,
         address _address
     ) public returns (uint256 remainQuantity) {
-        //uint256 remainQty = 0;
+        require(msg.sender == operator, "invalid operator");
+        //console.log("Operator", operator);
+        //console.log("msg.sender", msg.sender);
         WhiteList[] storage lists = blindBoxWhiteList[_blindBoxId];
         for (uint256 i = 0; i < lists.length; i++) {
             WhiteList storage whiteList = lists[i];
@@ -227,5 +250,33 @@ contract SalesProvider is VRFConsumerBase, Ownable {
                 break;
             }
         }
+    }
+
+    function getUserBlindboxTotalMintedCount(
+        uint256 _blindBoxId,
+        address _address
+    ) public view returns (uint256 totlMintedCount) {
+        totlMintedCount = blindboxUserMintQuantity[_address][_blindBoxId];
+    }
+
+    function checkIfUserUnderBlindBoxMintLimit(
+        uint256 _blindBoxId,
+        address _address
+    ) public view returns (bool) {
+        return
+            blindboxUserMintQuantity[_address][_blindBoxId] <
+            blindBoxSettings[_blindBoxId].purchaseLimit;
+    }
+
+    function increaseUserBlindboxTotalMintedCount(
+        uint256 _blindBoxId,
+        address _address
+    ) public returns (uint256 totalMintedCount) {
+        require(msg.sender == operator, "invalid operator");
+        //console.log("Operator", operator);
+        //console.log("msg.sender", msg.sender);
+        uint256 mintedQty = blindboxUserMintQuantity[_address][_blindBoxId];
+        blindboxUserMintQuantity[_address][_blindBoxId] = mintedQty + 1;
+        totalMintedCount = blindboxUserMintQuantity[_address][_blindBoxId];
     }
 }
