@@ -27,6 +27,8 @@ contract SalesProvider is VRFConsumerBase, Ownable {
     //blindbox Id => blindBoxSetting
     mapping(uint256 => BlindBoxSetting) public blindBoxSettings;
 
+    event UnboxLog(uint256 indexed blindboxId, uint256 vrfNumber);
+
     struct BlindBox {
         string name;
         string imageUrl;
@@ -99,6 +101,8 @@ contract SalesProvider is VRFConsumerBase, Ownable {
         //update vrfNumber in blindbox
         blindBoxes[vrfRequestsForBlindBox[requestId]].vrfNumber = randomResult;
         //blindBoxes[0].vrfNumber = randomResult;
+
+        emit UnboxLog(vrfRequestsForBlindBox[requestId], randomResult);
     }
 
     function addBlindBox(BlindBox memory _blindBox) public onlyOwner {
