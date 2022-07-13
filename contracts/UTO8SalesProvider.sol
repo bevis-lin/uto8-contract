@@ -15,11 +15,13 @@ contract UTO8SalesProvider is Ownable {
     mapping(address => mapping(uint256 => uint256)) public userSwapped;
 
     //uto8BoxId => total swapped quantity
-    mapping(uto8BoxId => uint256) public boxTotalSwapped;
+    mapping(uint256 => uint256) public boxTotalSwapped;
 
-    event SwapLog(uint256 indexed uto8BoxId, address userAddress, uint256 swapAmount);
-
-    
+    event SwapLog(
+        uint256 indexed uto8BoxId,
+        address userAddress,
+        uint256 swapAmount
+    );
 
     struct UTO8Box {
         uint256 availableQuantity;
@@ -34,16 +36,21 @@ contract UTO8SalesProvider is Ownable {
         operator = _operatorAddress;
     }
 
-    function checkIsUserCanSwap(address userAddress,
+    function addUTO8Box(UTO8Box memory _uto8Box) public onlyOwner {
+        uto8Boxes.push(_uto8Box);
+    }
+
+    function checkIsUserCanSwap(
+        address userAddress,
         uint256 uto8BoxId,
-        uint256 swapQuantity) public view returns (bool){
-        
+        uint256 swapQuantity
+    ) public view returns (bool) {
         UTO8Box storage box = uto8Boxes[uto8BoxId];
 
         uint256 oriTotalSwapped = userSwapped[userAddress][uto8BoxId];
-        uint256 newTotalSwapped = oriTotalSwapped + swapQuantity
-        
-        return box.singleLimit>= newTotalSwapped;     
+        uint256 newTotalSwapped = oriTotalSwapped + swapQuantity;
+
+        return box.singleLimit >= newTotalSwapped;
     }
 
     function addUserSwapHistory(
@@ -52,18 +59,39 @@ contract UTO8SalesProvider is Ownable {
         uint256 swapQuantity
     ) public returns (uint256 remainQuantity) {
         require(msg.sender == operator, "invalid operator");
-        
+
         UTO8Box storage box = uto8Boxes[uto8BoxId];
 
         uint256 oriTotalSwapped = userSwapped[userAddress][uto8BoxId];
-        uint256 newTotalSwapped = oriTotalSwapped + swapQuantity
-        
+        uint256 newTotalSwapped = oriTotalSwapped + swapQuantity;
+
         //update quantity
         userSwapped[userAddress][uto8BoxId] = newTotalSwapped;
 
         emit SwapLog(uto8BoxId, userAddress, swapQuantity);
 
         //return remains
-        remainQuantity = box.singleLimit - newTotalSwapped
+        remainQuantity = box.singleLimit - newTotalSwapped;
+    }
+
+    function getUTO8BoxInfo(uint256 _uto8BoxId)
+        public
+        view
+        returns (
+            uint256 availableQuantity,
+            uint256 exchangeRate,
+            uint256 singleLimit,
+            uint256 minUnit,
+            uint256 saleTimeStart,
+            uint256 saleTimeEnd
+        )
+    {
+        UTO8Box storage box = uto8Boxes[_uto8BoxId];
+        availableQuantity = box.availableQuantity;
+        exchangeRate = box.exchangeRate;
+        singleLimit = box.singleLimit;
+        minUnit = box.minUnit;
+        saleTimeStart = box.saleTimeStart;
+        saleTimeEnd = box.saleTimeEnd;
     }
 }
