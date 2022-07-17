@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.1;
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./UTO8.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./UTO8SalesProvider.sol";
 
-// interface IERC20 {
-//     function transfer(address _to, uint256 _value) external returns (bool);
-
-//     // don't need to define other functions, only using `transfer()` in this case
-// }
-
 contract UTO8Vendor is Ownable {
-    UTO8 uto8;
+    using SafeERC20 for IERC20;
+    using SafeMath for uint256;
+    IERC20 uto8;
     IERC20 usdt;
     UTO8SalesProvider uto8SalesProvider;
 
+    event USDTReveived(address _from, uint _amount);
+
     constructor(address uto8TokenAddress, address ustdTokenAddress) {
-        uto8 = UTO8(uto8TokenAddress);
-        usdt = IERC20(address(ustdTokenAddress));
+        uto8 = IERC20(uto8TokenAddress);
+        usdt = IERC20(ustdTokenAddress);
     }
 
     function setUTO8SalesProvider(address contractAddress) public onlyOwner {
@@ -38,7 +38,7 @@ contract UTO8Vendor is Ownable {
         require(remains == 0, "Swap amount should be a multiple of minUnit");
 
         //get rate and calculate require usdt
-        uint256 requiredUsdt = (exchangeRate / 100) * (10**6) * amount;
+        uint256 requiredUsdt = exchangeRate * (10**4) * amount;
 
         //check if user have enough USDT
         uint256 userUsdtBalance = usdt.balanceOf(msg.sender);
@@ -49,18 +49,24 @@ contract UTO8Vendor is Ownable {
 
         address ownerAddress = owner();
 
-        //check if contract has enough UTO8
-        uint256 contractUTO8Balance = uto8.balanceOf(address(this));
+        //check if contract owner has enough UTO8
+        uint256 contractOwnerUTO8Balance = uto8.balanceOf(ownerAddress);
         require(
-            contractUTO8Balance >= amount,
-            "Contract does not have enough UTO8"
+            contractOwnerUTO8Balance >= amount,
+            "Contract owner does not have enough UTO8"
         );
 
-        usdt.transferFrom(msg.sender, payable(ownerAddress), requiredUsdt);
-        bool tokenSent = uto8.transfer(msg.sender, amount);
-        require(tokenSent, "Failed to swap UTO8");
+        usdt.safeTransferFrom(msg.sender, ownerAddress, requiredUsdt);
+        //require(usdtTokenSent, "Failed to send USDT to contract owenr");
+
+        emit USDTReveived(msg.sender, requiredUsdt);
+        
+        uto8.safeTransferFrom(ownerAddress, msg.sender, amount * (10**18));
+        //require(tokenSent, "Failed to send UTO8 to user");
 
         //add user swap record
-        uto8SalesProvider.addUserSwapHistory(msg.sender, uto8BoxId, amount);
+        //uto8SalesProvider.addUserSwapHistory(msg.sender, uto8BoxId, amount);
     }
+
+    
 }
