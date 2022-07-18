@@ -13,7 +13,7 @@ contract UTO8Vendor is Ownable {
     IERC20 usdt;
     UTO8SalesProvider uto8SalesProvider;
 
-    event USDTReveived(address _from, uint _amount);
+    event USDTReceived(address _from, uint256 _amount);
 
     constructor(address uto8TokenAddress, address ustdTokenAddress) {
         uto8 = IERC20(uto8TokenAddress);
@@ -59,14 +59,12 @@ contract UTO8Vendor is Ownable {
         usdt.safeTransferFrom(msg.sender, ownerAddress, requiredUsdt);
         //require(usdtTokenSent, "Failed to send USDT to contract owenr");
 
-        emit USDTReveived(msg.sender, requiredUsdt);
-        
+        emit USDTReceived(msg.sender, requiredUsdt);
+
         uto8.safeTransferFrom(ownerAddress, msg.sender, amount * (10**18));
         //require(tokenSent, "Failed to send UTO8 to user");
 
         //add user swap record
-        //uto8SalesProvider.addUserSwapHistory(msg.sender, uto8BoxId, amount);
+        uto8SalesProvider.addUserSwapHistory(msg.sender, uto8BoxId, amount);
     }
-
-    
 }

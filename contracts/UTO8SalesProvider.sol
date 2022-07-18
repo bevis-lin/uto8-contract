@@ -63,12 +63,16 @@ contract UTO8SalesProvider is Ownable {
         UTO8Box storage box = uto8Boxes[uto8BoxId];
 
         uint256 oriTotalSwapped = userSwapped[userAddress][uto8BoxId];
+        uint256 oriBoxTotalSwapped = boxTotalSwapped[uto8BoxId];
         uint256 newTotalSwapped = oriTotalSwapped + swapQuantity;
 
         //update quantity
         userSwapped[userAddress][uto8BoxId] = newTotalSwapped;
 
         emit SwapLog(uto8BoxId, userAddress, swapQuantity);
+
+        //update box total swap quantity
+        boxTotalSwapped[uto8BoxId] = oriBoxTotalSwapped + swapQuantity;
 
         //return remains
         remainQuantity = box.singleLimit - newTotalSwapped;
