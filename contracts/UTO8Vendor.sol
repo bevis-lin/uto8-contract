@@ -26,6 +26,10 @@ contract UTO8Vendor is Ownable {
 
     function swapUTO8(uint256 uto8BoxId, uint256 amount) public payable {
         require(
+            uto8SalesProvider.checkIsSaleStart(uto8BoxId),
+            "Sale has not started yet"
+        );
+        require(
             uto8SalesProvider.checkIsUserCanSwap(msg.sender, uto8BoxId, amount),
             "Exceed single limitation"
         );

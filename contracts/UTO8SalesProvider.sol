@@ -98,4 +98,8 @@ contract UTO8SalesProvider is Ownable {
         saleTimeStart = box.saleTimeStart;
         saleTimeEnd = box.saleTimeEnd;
     }
+
+    function checkIsSaleStart(uint256 _uto8BoxId) public view returns (bool) {
+        return uto8Boxes[_uto8BoxId].saleTimeStart <= block.timestamp;
+    }
 }
